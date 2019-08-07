@@ -52,9 +52,45 @@ EOF
 
 add_indexes(){
   status "Adding Indexes"
-  ldapmodify -Y EXTERNAL -H ldapi:/// << EOF
+  ldapmodify -v -Y EXTERNAL -H ldapi:/// << EOF
 dn: olcDatabase={1}mdb,cn=config
 changetype: modify
+add: olcDbIndex
+olcDbIndex: sambaSID eq
+-
+add: olcDbIndex
+olcDbIndex: sambaPrimaryGroupSID eq
+-
+add: olcDbIndex
+olcDbIndex: sambaGroupType eq
+-
+add: olcDbIndex
+olcDbIndex: sambaSIDList eq
+-
+add: olcDbIndex
+olcDbIndex: sambaDomainName eq
+-
+add: olcDbIndex
+olcDbIndex: sudoHost eq
+-
+add: olcDbIndex
+olcDbIndex: ipServicePort eq
+-
+add: olcDbIndex
+olcDbIndex: ipServiceProtocol eq
+-
+add: olcDbIndex
+olcDbIndex: entryUUID eq
+-
+add: olcDbIndex
+olcDbIndex: entryCSN eq
+-
+add: olcDbIndex
+olcDbIndex: dc eq
+-
+add: olcDbIndex
+olcDbIndex: uniqueMember eq,pres
+-
 add: olcDbIndex
 olcDbIndex: sn pres,sub,eq
 -
@@ -62,20 +98,33 @@ add: olcDbIndex
 olcDbIndex: displayName pres,sub,eq
 -
 add: olcDbIndex
-olcDbIndex: default sub
+olcDbIndex: gecos pres,sub,eq
 -
 add: olcDbIndex
 olcDbIndex: mail,givenName eq,subinitial
 -
 add: olcDbIndex
-olcDbIndex: dc eq
+olcDbIndex: default sub
 -
 add: olcDbIndex
-olcDbIndex: uniqueMember eq
+olcDbIndex: ou eq
+-
+add: olcDbIndex
+olcDbIndex: loginShell eq
+-
+add: olcDbIndex
+olcDbIndex: nisMapName eq
+-
+add: olcDbIndex
+olcDbIndex: nisMapEntry eq
 EOF
 }
 
-# dn: olcDatabase={1}mdb,cn=config
+
+
+
+
+
 
 enable_modules(){
   status "Adding Modules"
@@ -97,7 +146,6 @@ olcModuleLoad: ppolicy
 add: olcModuleLoad
 olcModuleLoad: smbk5pwd
 EOF
-
 }
 
 setup_overlays(){
@@ -174,10 +222,22 @@ objectClass: organizationalUnit
 ou: Groups
 EOF
 
-
-
 }
 
+fix_acls(){
+  status "Adding Additional ACLS"
+  ldapmodify -v -Y EXTERNAL -H ldapi:/// << EOF
+dn: olcDatabase={1}mdb,cn=config
+add: olcAccess
+olcAccess: {1}to attrs=loginShell by self write by * read
+-
+add: olcAccess
+olcAccess: {1}to attrs=sshPublicKey by self write by * read
+-
+add: olcAccess
+olcAccess: {1}to attrs=shadowLastChange,sambaNTPassword,sambaLMPassword,sambaPwdLastSet,sambaPwdMustChange by self write by * none
+EOF
+}
 
 add_schemas(){
 
@@ -213,6 +273,7 @@ if [ ! -e /var/lib/ldap/docker_bootstrapped ]; then
   add_indexes
   enable_modules
   setup_overlays
+  fix_acls
   setup_basic_structure
   touch /var/lib/ldap/docker_bootstrapped
   wait
