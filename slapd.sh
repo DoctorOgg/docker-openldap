@@ -121,11 +121,6 @@ EOF
 }
 
 
-
-
-
-
-
 enable_modules(){
   status "Adding Modules"
   ldapadd -Y EXTERNAL -H ldapi:/// << EOF

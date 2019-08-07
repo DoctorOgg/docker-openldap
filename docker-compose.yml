@@ -1,6 +1,7 @@
 version: '3'
 services:
   openldap:
+    hostname: openldap
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,3 +17,13 @@ services:
     volumes:
       - /etc/ldap
       - /var/lib/ldap
+  phpldapadmin:
+      image: osixia/phpldapadmin:latest
+      container_name: phpldapadmin
+      environment:
+        PHPLDAPADMIN_HTTPS: "false"
+        PHPLDAPADMIN_LDAP_HOSTS: "#PYTHON2BASH:[ {'openldap':[{'server': [{'tls': False},{'port': 389},{'force_may': \"array('uidNumber','gidNumber','sambaSID')\"},{'base': \"array('dc=example,dc=com')\"}]},{'login': [{'bind_id': 'cn=admin,dc=example,dc=com'}]},{'auto_number': [{'min': \"array('uidNumber'=>1000,'gidNumber'=>1000)\"}]}]}]"
+      ports:
+        - "8080:80"
+      depends_on:
+        - openldap
