@@ -1,0 +1,18 @@
+version: '3'
+services:
+  openldap:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "10389:389"
+    environment:
+      - LDAP_ROOTPASS=farts
+      - LDAP_ORGANISATION=Acme Widgets Inc.
+      - LDAP_DOMAIN=example.com
+      - LDAP_URLS=ldap:///
+      - SLAPD_DEBUG_LEVEL=64
+    volumes:
+      - /etc/ldap
+      - /var/lib/ldap
