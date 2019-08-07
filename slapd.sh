@@ -13,6 +13,10 @@ set_config(){
   echo "$@" | debconf-set-selections
 }
 
+ldap_add_ldif_exteral(){
+  status "Adding LDIF: $1"
+  ldapadd -Y EXTERNAL -H ldapi:/// -f $1
+}
 
 set_cn_config_password(){
   status "setting cn=admin,cn=config password"
@@ -91,7 +95,7 @@ add: olcModuleLoad
 olcModuleLoad: ppolicy
 -
 add: olcModuleLoad
-olcModuleLoad: smbkrb5pwd
+olcModuleLoad: smbk5pwd
 EOF
 
 }
@@ -99,33 +103,33 @@ EOF
 setup_overlays(){
   status "Setting up overlays"
   ldapadd -Y EXTERNAL -H ldapi:/// << EOF
-dn: olcOverlay={0}memberof,olcDatabase={1}mdb,cn=config
+dn: olcOverlay=memberof,olcDatabase={1}mdb,cn=config
 objectClass: olcConfig
 objectClass: olcMemberOf
 objectClass: olcOverlayConfig
 objectClass: top
 olcOverlay: memberof
 
-dn: olcOverlay={1}refint,olcDatabase={1}mdb,cn=config
+dn: olcOverlay=refint,olcDatabase={1}mdb,cn=config
 objectClass: olcConfig
 objectClass: olcMemberOf
 objectClass: olcOverlayConfig
 objectClass: top
 olcOverlay: refint
 
-dn: olcOverlay={2}ppolicy,olcDatabase={1}mdb,cn=config
+dn: olcOverlay=ppolicy,olcDatabase={1}mdb,cn=config
 objectClass: olcOverlayConfig
 objectClass: olcPPolicyConfig
 olcOverlay: ppolicy
 olcPPolicyDefault: cn=Password,ou=Policies,`convert_fqdn_to_dn ${LDAP_DOMAIN}`
 
-dn: olcOverlay={3}smbk5pwd,olcDatabase={1}mdb,cn=config
+dn: olcOverlay=smbk5pwd,olcDatabase={1}mdb,cn=config
 objectClass: olcOverlayConfig
-objectClass: olcSmbKrb5PwdConfig
-olcOverlay: {0}smbk5pwd
+objectClass: olcSmbK5PwdConfig
+olcOverlay: smbk5pwd
 olcSmbK5PwdEnable: samba
+olcSmbK5PwdEnable: shadow
 olcSmbK5PwdMustChange: 2592000
-
 EOF
 
 }
@@ -174,14 +178,10 @@ EOF
 
 }
 
-ldap_add_ldif_exteral(){
-  status "Adding LDIF: $1"
-  ldapadd -Y EXTERNAL -H ldapi:/// -f $1
-}
 
 add_schemas(){
 
-  for schema in  misc  ppolicy pmi; do
+  for schema in  sudo dyngroup openldap collective corba duaconf java misc ppolicy pmi; do
     ldap_add_ldif_exteral /etc/ldap/schema/${schema}.ldif
   done
 

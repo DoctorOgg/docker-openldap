@@ -11,6 +11,7 @@ RUN apt-get update \
     less \
     lsof \
     slapd-smbk5pwd \
+    e3 \
   && ln -fs /usr/share/zoneinfo/US/Pacific-New /etc/localtime && dpkg-reconfigure -f noninteractive tzdata \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/backups/* \
   && mkdir /etc/ldap-skel \
